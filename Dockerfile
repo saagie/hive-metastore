@@ -11,6 +11,7 @@ ARG POSTGRES_CONNECTOR_VERSION=42.2.18
 
 # Set necessary environment variables.
 ENV HADOOP_HOME="/opt/hadoop"
+ENV HIVE_HOME=/opt/apache-hive-metastore-${HIVE_METASTORE_VERSION}-bin
 ENV PATH="/opt/spark/bin:/opt/hadoop/bin:${PATH}"
 ENV DATABASE_DRIVER=org.postgresql.Driver
 ENV DATABASE_TYPE=postgres
@@ -52,6 +53,13 @@ RUN \
     rm -rf /var/lib/apt/lists/*
 
 COPY run.sh run.sh
+
+RUN groupadd -r hive --gid=1000 && \
+    useradd -r -g hive --uid=1000 -d ${HIVE_HOME} hive && \
+    chown hive:hive -R ${HIVE_HOME} && \
+    chown hive:hive run.sh && chmod +x run.sh
+
+USER hive
 
 CMD [ "./run.sh" ]
 HEALTHCHECK CMD [ "sh", "-c", "netstat -ln | grep 9083" ]
